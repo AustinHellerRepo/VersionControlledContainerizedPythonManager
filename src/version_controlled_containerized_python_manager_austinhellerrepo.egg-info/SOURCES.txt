@@ -1,0 +1,10 @@
+LICENSE
+pyproject.toml
+setup.cfg
+src/austinhellerrepo/__init__.py
+src/austinhellerrepo/version_controlled_containerized_python_manager.py
+src/version_controlled_containerized_python_manager_austinhellerrepo.egg-info/PKG-INFO
+src/version_controlled_containerized_python_manager_austinhellerrepo.egg-info/SOURCES.txt
+src/version_controlled_containerized_python_manager_austinhellerrepo.egg-info/dependency_links.txt
+src/version_controlled_containerized_python_manager_austinhellerrepo.egg-info/requires.txt
+src/version_controlled_containerized_python_manager_austinhellerrepo.egg-info/top_level.txt
