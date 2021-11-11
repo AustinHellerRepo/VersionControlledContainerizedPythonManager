@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: version-controlled-containerized-python-manager-austinhellerrepo
-Version: 0.0.4
+Version: 0.0.5
 Summary: A package that provides management of a python container existing in a remote repository
 Home-page: https://github.com/AustinHellerRepo/VersionControlledContainerizedPythonManager
 Author: Austin Heller
