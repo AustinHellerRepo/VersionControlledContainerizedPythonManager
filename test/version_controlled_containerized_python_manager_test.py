@@ -64,13 +64,14 @@ class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
 			git_manager=git_manager
 		)
 
-		with self.assertRaises(DockerContainerInstanceTimeoutException):
-			output = vccpm.run_python_script(
-				git_repo_clone_url="https://github.com/AustinHellerRepo/TestDockerTimeDelay.git",
-				script_file_path="start.py",
-				script_arguments=[],
-				timeout_seconds=5
-			)
+		with vccpm.run_python_script(
+			git_repo_clone_url="https://github.com/AustinHellerRepo/TestDockerTimeDelay.git",
+			script_file_path="start.py",
+			script_arguments=[],
+			timeout_seconds=5
+		) as vccpmi:
+			with self.assertRaises(DockerContainerInstanceTimeoutException):
+				vccpmi.wait()
 
 		temp_directory.cleanup()
 
@@ -86,12 +87,14 @@ class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
 			git_manager=git_manager
 		)
 
-		output = vccpm.run_python_script(
+		with vccpm.run_python_script(
 			git_repo_clone_url="https://github.com/AustinHellerRepo/TestDockerTimeDelay.git",
 			script_file_path="start.py",
 			script_arguments=[],
 			timeout_seconds=20
-		)
+		) as vccpmi:
+			vccpmi.wait()
+			output = vccpmi.get_output()
 
 		self.assertEqual('{ "data": [ ], "exception": null }\n', output)
 

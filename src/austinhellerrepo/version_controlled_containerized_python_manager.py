@@ -1,4 +1,4 @@
-from austin_heller_repo.docker_manager import DockerManager
+from austin_heller_repo.docker_manager import DockerManager, DockerContainerInstance
 from austin_heller_repo.git_manager import GitManager, GitLocalRepositoryInstance
 from austin_heller_repo.threading import TimeoutThread
 from typing import List, Tuple, Dict
@@ -12,14 +12,36 @@ class DockerContainerInstanceTimeoutException(Exception):
 
 class VersionControlledContainerizedPythonInstance():
 
-	def __init__(self):
-		raise NotImplementedError()
+	def __init__(self, *, timeout_thread: TimeoutThread, docker_container_instance: DockerContainerInstance, docker_manager: DockerManager):
+
+		self.__timeout_thread = timeout_thread
+		self.__docker_container_instance = docker_container_instance
+		self.__docker_manager = docker_manager
 
 	def get_output(self) -> str:
-		raise NotImplementedError()
+		output = self.__docker_container_instance.get_stdout()
+		if output is not None:
+			output = output.decode()
+		return output
 
 	def wait(self):
-		raise NotImplementedError()
+		is_successful = self.__timeout_thread.try_wait()
+		if not is_successful:
+			raise DockerContainerInstanceTimeoutException()
+
+	def dispose(self):
+		self.__docker_container_instance.stop()
+		self.__docker_container_instance.remove()
+		self.__docker_manager.dispose()
+
+		self.__docker_container_instance = None
+		self.__docker_manager = None
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		self.dispose()
 
 
 class VersionControlledContainerizedPythonManager():
@@ -28,7 +50,7 @@ class VersionControlledContainerizedPythonManager():
 
 		self.__git_manager = git_manager
 
-	def run_python_script(self, *, git_repo_clone_url: str, script_file_path: str, script_arguments: List[str], timeout_seconds: float) -> str:
+	def run_python_script(self, *, git_repo_clone_url: str, script_file_path: str, script_arguments: List[str], timeout_seconds: float) -> VersionControlledContainerizedPythonInstance:
 
 		if not self.__git_manager.is_repository_cloned_locally(
 			git_url=git_repo_clone_url
@@ -66,10 +88,7 @@ class VersionControlledContainerizedPythonManager():
 				concat_script_arguments += " "
 			concat_script_arguments += f"{script_argument}"
 
-		output = None  # type: bytes
-
 		def timeout_thread_method():
-			nonlocal output
 			nonlocal docker_container_instance
 			nonlocal script_arguments
 			nonlocal script_file_path
@@ -86,18 +105,13 @@ class VersionControlledContainerizedPythonManager():
 
 			docker_container_instance.wait()
 
-			output = docker_container_instance.get_stdout()
-
 		timeout_thread = TimeoutThread(timeout_thread_method, timeout_seconds)
 		timeout_thread.start()
 
-		is_successful = timeout_thread.try_wait()
+		version_controlled_containerized_python_instance = VersionControlledContainerizedPythonInstance(
+			timeout_thread=timeout_thread,
+			docker_container_instance=docker_container_instance,
+			docker_manager=docker_manager
+		)
 
-		docker_container_instance.stop()
-		docker_container_instance.remove()
-		docker_manager.dispose()
-
-		if not is_successful:
-			raise DockerContainerInstanceTimeoutException()
-
-		return output.decode()
+		return version_controlled_containerized_python_instance
