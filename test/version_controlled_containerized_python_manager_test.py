@@ -3,6 +3,7 @@ from src.austinhellerrepo.version_controlled_containerized_python_manager import
 from austin_heller_repo.git_manager import GitManager
 import tempfile
 import docker
+import time
 
 
 class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
@@ -97,5 +98,31 @@ class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
 			output = vccpmi.get_output()
 
 		self.assertEqual('{ "data": [ ], "exception": null }\n', output)
+
+		temp_directory.cleanup()
+
+	def test_run_time_delay_script_after_delay(self):
+
+		temp_directory = tempfile.TemporaryDirectory()
+
+		git_manager = GitManager(
+			git_directory_path=temp_directory.name
+		)
+
+		vccpm = VersionControlledContainerizedPythonManager(
+			git_manager=git_manager
+		)
+
+		with vccpm.run_python_script(
+			git_repo_clone_url="https://github.com/AustinHellerRepo/TestDockerTimeDelay.git",
+			script_file_path="start.py",
+			script_arguments=[],
+			timeout_seconds=5
+		) as vccpmi:
+
+			time.sleep(15)
+
+			with self.assertRaises(DockerContainerInstanceTimeoutException):
+				vccpmi.wait()
 
 		temp_directory.cleanup()
