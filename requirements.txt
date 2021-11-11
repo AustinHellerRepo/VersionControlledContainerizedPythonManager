@@ -1,0 +1,3 @@
+git+https://github.com/AustinHellerRepo/DockerManager
+git+https://github.com/AustinHellerRepo/GitManager
+git+https://github.com/AustinHellerRepo/Threading
