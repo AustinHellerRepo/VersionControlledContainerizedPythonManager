@@ -13,7 +13,8 @@ class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
 		docker_client = docker.from_env()
 
 		image_names = [
-			"vccpm_testdockertimedelay"
+			"vccpm_testdockertimedelay",
+			"vccpm_testdockerspawnscript"
 		]
 
 		for image_name in image_names:
@@ -69,10 +70,11 @@ class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
 			git_repo_clone_url="https://github.com/AustinHellerRepo/TestDockerTimeDelay.git",
 			script_file_path="start.py",
 			script_arguments=[],
-			timeout_seconds=5
-		) as vccpmi:
+			timeout_seconds=5,
+			is_docker_socket_needed=False
+		) as vccpi:
 			with self.assertRaises(DockerContainerInstanceTimeoutException):
-				vccpmi.wait()
+				vccpi.wait()
 
 		temp_directory.cleanup()
 
@@ -92,7 +94,8 @@ class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
 			git_repo_clone_url="https://github.com/AustinHellerRepo/TestDockerTimeDelay.git",
 			script_file_path="start.py",
 			script_arguments=[],
-			timeout_seconds=20
+			timeout_seconds=20,
+			is_docker_socket_needed=False
 		) as vccpmi:
 			vccpmi.wait()
 			output = vccpmi.get_output()
@@ -117,7 +120,8 @@ class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
 			git_repo_clone_url="https://github.com/AustinHellerRepo/TestDockerTimeDelay.git",
 			script_file_path="start.py",
 			script_arguments=[],
-			timeout_seconds=5
+			timeout_seconds=5,
+			is_docker_socket_needed=False
 		) as vccpmi:
 
 			time.sleep(15)
@@ -126,3 +130,30 @@ class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
 				vccpmi.wait()
 
 		temp_directory.cleanup()
+
+	def test_recursive_docker_spawn_script(self):
+
+		temp_directory = tempfile.TemporaryDirectory()
+
+		git_manager = GitManager(
+			git_directory_path=temp_directory.name
+		)
+
+		vccpm = VersionControlledContainerizedPythonManager(
+			git_manager=git_manager
+		)
+
+		with vccpm.run_python_script(
+			git_repo_clone_url="https://github.com/AustinHellerRepo/TestDockerSpawnScript.git",
+			script_file_path="/app/start.py",
+			script_arguments=["-g", "https://github.com/AustinHellerRepo/TestDockerTimeDelay.git", "-s", "start.py", "-t", "20"],
+			timeout_seconds=30,
+			is_docker_socket_needed=True
+		) as vccpi:
+			vccpi.wait()
+			output = vccpi.get_output()
+
+		temp_directory.cleanup()
+
+		print(f"output: {output}")
+		#self.assertEqual('{ "data": [ ], "exception": null }\n', output)

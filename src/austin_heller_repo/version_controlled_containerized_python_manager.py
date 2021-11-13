@@ -50,7 +50,7 @@ class VersionControlledContainerizedPythonManager():
 
 		self.__git_manager = git_manager
 
-	def run_python_script(self, *, git_repo_clone_url: str, script_file_path: str, script_arguments: List[str], timeout_seconds: float) -> VersionControlledContainerizedPythonInstance:
+	def run_python_script(self, *, git_repo_clone_url: str, script_file_path: str, script_arguments: List[str], timeout_seconds: float, is_docker_socket_needed: bool) -> VersionControlledContainerizedPythonInstance:
 
 		if not self.__git_manager.is_repository_cloned_locally(
 			git_url=git_repo_clone_url
@@ -71,7 +71,8 @@ class VersionControlledContainerizedPythonManager():
 				)
 
 		docker_manager = DockerManager(
-			dockerfile_directory_path=git_local_repository_instance.get_directory_path()
+			dockerfile_directory_path=git_local_repository_instance.get_directory_path(),
+			is_docker_socket_needed=is_docker_socket_needed
 		)
 
 		git_project_name = GitManager.get_project_name_from_git_url(
