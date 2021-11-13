@@ -2,6 +2,7 @@ from austin_heller_repo.docker_manager import DockerManager, DockerContainerInst
 from austin_heller_repo.git_manager import GitManager, GitLocalRepositoryInstance
 from austin_heller_repo.threading import TimeoutThread
 from typing import List, Tuple, Dict
+import uuid
 
 
 class DockerContainerInstanceTimeoutException(Exception):
@@ -18,11 +19,8 @@ class VersionControlledContainerizedPythonInstance():
 		self.__docker_container_instance = docker_container_instance
 		self.__docker_manager = docker_manager
 
-	def get_output(self) -> str:
-		output = self.__docker_container_instance.get_stdout()
-		if output is not None:
-			output = output.decode()
-		return output
+	def get_output(self) -> bytes:
+		return self.__docker_container_instance.get_stdout()
 
 	def wait(self):
 		is_successful = self.__timeout_thread.try_wait()
@@ -80,7 +78,7 @@ class VersionControlledContainerizedPythonManager():
 		)
 
 		docker_container_instance = docker_manager.start(
-			name=f"vccpm_{git_project_name.lower()}"
+			name=f"vccpm_{git_project_name.lower()}_{uuid.uuid4()}"
 		)
 
 		concat_script_arguments = ""

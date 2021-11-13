@@ -4,6 +4,7 @@ from austin_heller_repo.git_manager import GitManager
 import tempfile
 import docker
 import time
+import json
 
 
 class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
@@ -100,7 +101,7 @@ class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
 			vccpmi.wait()
 			output = vccpmi.get_output()
 
-		self.assertEqual('{ "data": [ ], "exception": null }\n', output)
+		self.assertEqual(b'{ "data": [ ], "exception": null }\n', output)
 
 		temp_directory.cleanup()
 
@@ -143,10 +144,13 @@ class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
 			git_manager=git_manager
 		)
 
+		git_url = "https://github.com/AustinHellerRepo/TestDockerTimeDelay.git"
+		script_file_path = "start.py"
+
 		with vccpm.run_python_script(
 			git_repo_clone_url="https://github.com/AustinHellerRepo/TestDockerSpawnScript.git",
 			script_file_path="/app/start.py",
-			script_arguments=["-g", "https://github.com/AustinHellerRepo/TestDockerTimeDelay.git", "-s", "start.py", "-t", "20"],
+			script_arguments=["-g", git_url, "-s", script_file_path, "-t", "20"],
 			timeout_seconds=30,
 			is_docker_socket_needed=True
 		) as vccpi:
@@ -156,4 +160,11 @@ class VersionControlledContainerizedPythonManagerTest(unittest.TestCase):
 		temp_directory.cleanup()
 
 		print(f"output: {output}")
-		#self.assertEqual('{ "data": [ ], "exception": null }\n', output)
+
+		output_json = json.loads(output.decode())
+
+		self.assertEqual(0, len(output_json["data"][0]))
+		self.assertEqual(git_url, output_json["data"][1])
+		self.assertEqual(script_file_path, output_json["data"][2])
+
+		print(f"Execution time: {output_json['data'][4]}")
